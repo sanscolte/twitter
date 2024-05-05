@@ -41,8 +41,8 @@ class User(Base):
     followers: Mapped[List["UserFollower"]] = relationship(
         "User",
         secondary="user_follower",
-        primaryjoin="User.id==user_follower.c.follower_id",
-        secondaryjoin="User.id==user_follower.c.following_id",
+        primaryjoin="User.id==user_follower.c.following_id",
+        secondaryjoin="User.id==user_follower.c.follower_id",
         backref=backref("following", lazy="selectin"),
         # cascade='all, delete',
         lazy='selectin',
