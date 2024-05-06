@@ -79,6 +79,9 @@ if __name__ == '__main__':
                 .where(User.api_key == 'test1')
             )
 
+            # P.S. любые комбинации options, любые виды подгрузки, даже без options
+            # ИМЕННО с условием НЕ работают и вызывают MissingGreenlet
+
             user = result.scalar_one()
 
             print(user)
