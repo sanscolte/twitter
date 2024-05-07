@@ -89,7 +89,7 @@ if __name__ == '__main__':
             print(user.to_json())
 
 
-    # asyncio.run(drop_db_and_tables())
-    # asyncio.run(create_db_and_tables())
-    # asyncio.run(create_db())
+    asyncio.run(drop_db_and_tables())
+    asyncio.run(create_db_and_tables())
+    asyncio.run(create_db())
     asyncio.run(select_user())
