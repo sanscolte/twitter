@@ -77,15 +77,21 @@ class Follower(Base):
         foreign_keys=[following_id],
     )
 
-    def to_json(self):
+    __table_args__ = (
+        UniqueConstraint('follower_id', 'following_id', name='uq_follower_id_following_id'),
+    )
+
+    def to_json_followers(self):
+        return {
+            'id': self.follower.id,
+            'name': self.follower.name,
+        }
+
+    def to_json_following(self):
         return {
             'id': self.following.id,
             'name': self.following.name,
         }
-
-    __table_args__ = (
-        UniqueConstraint('follower_id', 'following_id', name='uq_follower_id_following_id'),
-    )
 
 
 class User(Base):
@@ -121,7 +127,3 @@ class User(Base):
             'followers': [f.to_json() for f in self.followers],
             'following': [f.to_json() for f in self.following],
         }
-
-    # def __repr__(self) -> str:
-    #     return f"<User {self.name}> | {self.api_key} | Tweets {self.tweets} |
-    #     Followers {self.followers} | Likes {self.liked_tweets}"
