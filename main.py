@@ -27,11 +27,11 @@ async def check_user_api_key_middleware(request: Request, call_next):
     :param call_next: Передача запроса следующему обработчику, middleware
     :return: Ответ
     """
-    api_key: str = request.headers.get("api-key")
+    api_key: str | None = request.headers.get("api-key")
 
     if api_key is not None:
         async with async_session() as session:
-            user: User = await get_user_by_api_key(session, api_key)
+            user: User | None = await get_user_by_api_key(session, api_key)
             if user is None:
                 raise HTTPException(status_code=401, detail="Invalid API Key")
 
@@ -49,5 +49,5 @@ async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

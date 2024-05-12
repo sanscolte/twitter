@@ -23,7 +23,7 @@ async def create_media(
     """
     unique_filename: str = await upload_media(file)
 
-    new_media: Media | None = Media(
+    new_media: Media = Media(
         filename=unique_filename,
         content_type=file.content_type,
     )
@@ -43,10 +43,7 @@ async def get_media(
     :param media_id: id файла
     :return: Media или None
     """
-    stmt: Select = (
-        select(Media)
-        .where(Media.id == media_id)
-    )
+    stmt: Select = select(Media).where(Media.id == media_id)
 
     result: Result = await session.execute(stmt)
     media: Media | None = result.scalar_one_or_none()
@@ -57,7 +54,7 @@ async def get_media(
 async def create_tweet_by_schema(
         session: AsyncSession,
         tweet: TweetIn,
-        api_key: str,
+        api_key: str | None,
 ) -> Tweet | None:
     """
     Функция создания твита по схеме
@@ -68,12 +65,9 @@ async def create_tweet_by_schema(
     """
     attachments: List[Media] = []
     for media_id in tweet.tweet_media_ids:
-        stmt: Select = (
-            select(Media)
-            .where(Media.id == media_id)
-        )
+        stmt: Select = select(Media).where(Media.id == media_id)
         result: Result = await session.execute(stmt)
-        media: Media | None = result.scalars().one_or_none()
+        media: Media = result.scalars().one_or_none()  # type: ignore
         attachments.append(media)
 
     new_tweet: Tweet = Tweet(
@@ -111,7 +105,7 @@ async def get_all_tweets(
 async def delete_tweet_by_id(
         session: AsyncSession,
         tweet_id: int,
-        api_key: str,
+        api_key: str | None,
 ) -> bool:
     """
     Функция удаления твита по id
@@ -120,11 +114,8 @@ async def delete_tweet_by_id(
     :param api_key: api-key автора
     :return: Логический результат
     """
-    stmt: Delete = (
-        delete(Tweet).where(
-            (Tweet.id == tweet_id) &
-            (Tweet.author_api_key == api_key),
-        )
+    stmt: Delete = delete(Tweet).where(
+        (Tweet.id == tweet_id) & (Tweet.author_api_key == api_key),
     )
 
     result: CursorResult = await session.execute(stmt)
@@ -138,7 +129,7 @@ async def delete_tweet_by_id(
 async def like_by_tweet_id(
         session: AsyncSession,
         tweet_id: int,
-        api_key: str,
+        api_key: str | None,
 ) -> bool:
     """
     Функция добавления твита в понравившиеся по id
@@ -148,7 +139,7 @@ async def like_by_tweet_id(
     :return: Логический результат
     """
     try:
-        new_like: Tweet | None = TweetLike(
+        new_like: TweetLike = TweetLike(
             user_api_key=api_key,
             tweet_id=tweet_id,
         )
@@ -163,7 +154,7 @@ async def like_by_tweet_id(
 async def delete_like_by_tweet_id(
         session: AsyncSession,
         tweet_id: int,
-        api_key: str,
+        api_key: str | None,
 ) -> bool:
     """
     Функция удаления твита из понравившихся по id
@@ -172,11 +163,8 @@ async def delete_like_by_tweet_id(
     :param api_key: api-key автора
     :return: Логический результат
     """
-    stmt: Delete = (
-        delete(TweetLike).where(
-            (TweetLike.user_api_key == api_key) &
-            (TweetLike.tweet_id == tweet_id),
-        )
+    stmt: Delete = delete(TweetLike).where(
+        (TweetLike.user_api_key == api_key) & (TweetLike.tweet_id == tweet_id),
     )
 
     result: CursorResult = await session.execute(stmt)
@@ -189,7 +177,7 @@ async def delete_like_by_tweet_id(
 
 async def get_user_by_api_key(
         session: AsyncSession,
-        api_key: str,
+        api_key: str | None,
 ) -> User | None:
     """
     Функция получения юзера по api-key
@@ -197,10 +185,7 @@ async def get_user_by_api_key(
     :param api_key: api-key юзера
     :return: Объект таблицы User или None
     """
-    stmt: Select = (
-        select(User)
-        .where(User.api_key == api_key)
-    )
+    stmt: Select = select(User).where(User.api_key == api_key)
     result: Result = await session.execute(stmt)
     result: Result = result.unique()
     user: User | None = result.scalar_one_or_none()
@@ -210,7 +195,7 @@ async def get_user_by_api_key(
 
 async def get_user_with_followers_and_following_by_api_key(
         session: AsyncSession,
-        api_key: str,
+        api_key: str | None,
 ) -> User | None:
     """
     Функция получения юзера с подписчиками и подписками по api-key
@@ -233,7 +218,7 @@ async def get_user_with_followers_and_following_by_api_key(
 
 async def get_user_with_followers_and_following_by_id(
         session: AsyncSession,
-        user_id: int,
+        user_id: int | None,
 ) -> User | None:
     """
      Функция получения юзера с подписчиками и подписками по id
@@ -256,7 +241,7 @@ async def get_user_with_followers_and_following_by_id(
 
 async def get_user_by_id(
         session: AsyncSession,
-        user_id: int,
+        user_id: int | None,
 ) -> User | None:
     """
     Функция получения юзера по id
@@ -264,10 +249,7 @@ async def get_user_by_id(
     :param user_id: id юзера
     :return: Объект таблицы User или None
     """
-    stmt: Select = (
-        select(User)
-        .where(User.id == user_id)
-    )
+    stmt: Select = select(User).where(User.id == user_id)
     result: Result = await session.execute(stmt)
     result: Result = result.unique()
     user: User | None = result.scalar_one_or_none()
@@ -278,7 +260,7 @@ async def get_user_by_id(
 async def follow_by_user_id(
         session: AsyncSession,
         user_id: int,
-        follower_api_key: str,
+        follower_api_key: str | None,
 ) -> bool:
     """
     Функция подписки на юзера по id
@@ -290,7 +272,9 @@ async def follow_by_user_id(
     following: User | None = await get_user_by_id(session, user_id)
 
     if following:
-        new_follow = Follower(follower_api_key=follower_api_key, following_id=following.id)
+        new_follow = Follower(
+            follower_api_key=follower_api_key, following_id=following.id
+        )
         session.add(new_follow)
         await session.commit()
         return True
@@ -301,7 +285,7 @@ async def follow_by_user_id(
 async def unfollow_by_user_id(
         session: AsyncSession,
         user_id: int,
-        follower_api_key: str,
+        follower_api_key: str | None,
 ) -> bool:
     """
     Функция отписки от юзера по id
@@ -310,11 +294,9 @@ async def unfollow_by_user_id(
     :param follower_api_key: api-key подписчика
     :return: Логический результат
     """
-    stmt: Delete = (
-        delete(Follower).where(
-            (Follower.follower_api_key == follower_api_key) &
-            (Follower.following_id == user_id),
-        )
+    stmt: Delete = delete(Follower).where(
+        (Follower.follower_api_key == follower_api_key)
+        & (Follower.following_id == user_id),
     )
 
     result: CursorResult = await session.execute(stmt)

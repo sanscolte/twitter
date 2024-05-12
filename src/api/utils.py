@@ -1,8 +1,8 @@
 import uuid
-import aiofiles
 
 from typing import Sequence, Tuple
 
+import aiofiles
 from fastapi import UploadFile
 
 from config import FILE_DIR
@@ -42,7 +42,7 @@ def build_get_media_response(media: Media) -> Tuple[str, str]:
     :param media: Объект таблицы Media
     :return: Кортеж из пути и типа контента файла
     """
-    return f'{FILE_DIR}/{media.filename}', media.content_type
+    return f"{FILE_DIR}/{media.filename}", media.content_type
 
 
 def build_create_tweet_response(tweet: Tweet) -> TweetOut:
@@ -73,7 +73,10 @@ def build_get_tweets_response(tweets: Sequence[Tweet]) -> TweetsOut:
                 content=t.content,
                 attachments=[f"/api/medias/{a.id}" for a in t.attachments],
                 author=AuthorBase(id=t.author.id, name=t.author.name),
-                likes=[LikeBase(user_id=like.user.id, name=like.user.name) for like in t.likes],
+                likes=[
+                    LikeBase(user_id=like.user.id, name=like.user.name)
+                    for like in t.likes
+                ],
             )
             for t in tweets
         ],
@@ -123,14 +126,20 @@ def build_get_user_response(user: User) -> UserOut:
             id=user.id,
             name=user.name,
             followers=[
-                FollowBase(id=follower.follower.id, name=follower.follower.name)
+                FollowBase(
+                    id=follower.follower.id,
+                    name=follower.follower.name,
+                )
                 for follower in user.followers
             ],
             following=[
-                FollowBase(id=following.following.id, name=following.following.name)
+                FollowBase(
+                    id=following.following.id,
+                    name=following.following.name,
+                )
                 for following in user.following
             ],
-        )
+        ),
     )
 
     return response
@@ -142,9 +151,10 @@ async def upload_media(file: UploadFile) -> str:
     :param file: Загружаемый файл
     :return: Уникальное имя файла для последующего сохранения в базу данных
     """
-    unique_filename: str = str(uuid.uuid4()) + "_" + file.filename
+    filename_part: str = file.filename if file.filename else "filename"
+    unique_filename: str = str(uuid.uuid4()) + "_" + filename_part
 
-    async with aiofiles.open(f'{FILE_DIR}/{unique_filename}', mode='wb') as f:
+    async with aiofiles.open(f"{FILE_DIR}/{unique_filename}", mode="wb") as f:
         content: bytes = await file.read()
         await f.write(content)
 

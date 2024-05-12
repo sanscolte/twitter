@@ -16,4 +16,4 @@ TEST_DB_NAME: str | None = os.environ.get("TEST_DB_NAME")
 TEST_DB_USER: str | None = os.environ.get("TEST_DB_USER")
 TEST_DB_PASS: str | None = os.environ.get("TEST_DB_PASS")
 
-FILE_DIR: str = 'static/images'
+FILE_DIR: str = "static/images"

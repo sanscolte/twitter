@@ -69,9 +69,7 @@ def upgrade() -> None:
         sa.Column("content_type", sa.String(), nullable=False),
         sa.Column("tweet_id", sa.Integer(), nullable=True),
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.ForeignKeyConstraint(
-            ["tweet_id"], ["tweet.id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["tweet_id"], ["tweet.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("id"),
     )
@@ -80,12 +78,8 @@ def upgrade() -> None:
         sa.Column("user_api_key", sa.String(), nullable=False),
         sa.Column("tweet_id", sa.Integer(), nullable=False),
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.ForeignKeyConstraint(
-            ["tweet_id"], ["tweet.id"], ondelete="CASCADE"
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_api_key"], ["user.api_key"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["tweet_id"], ["tweet.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["user_api_key"], ["user.api_key"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("id"),
         sa.UniqueConstraint(

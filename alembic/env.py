@@ -20,6 +20,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 from src.api.models import Base
 from database import DATABASE_URL
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
