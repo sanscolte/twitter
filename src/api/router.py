@@ -42,7 +42,7 @@ router: APIRouter = APIRouter(
 )
 
 
-@router.post("/medias", response_model=MediaOut)
+@router.post("/medias", response_model=MediaOut, status_code=201)
 async def create_medias(
         file: UploadFile,
         session: AsyncSession = Depends(get_async_session),
@@ -54,18 +54,24 @@ async def create_medias(
     :return: Схема MediaOut
     """
     if file.content_type not in {'image/jpeg', 'image/png'}:
-        raise HTTPException(status_code=400, detail='Media validation failed')
+        raise HTTPException(
+            status_code=400,
+            detail='Media validation failed',
+        )
 
     new_media: Media | None = await create_media(session, file)
 
     if new_media is None:
-        raise HTTPException(status_code=400, detail='Media validation failed')
+        raise HTTPException(
+            status_code=400,
+            detail='Media validation failed',
+        )
 
     response: MediaOut = build_create_media_response(new_media)
     return response
 
 
-@router.get('/medias/{media_id}', response_model=None)
+@router.get('/medias/{media_id}', response_model=None, status_code=200)
 async def get_medias(
         media_id: int,
         session: AsyncSession = Depends(get_async_session),
@@ -79,14 +85,17 @@ async def get_medias(
     media: Media | None = await get_media(session, media_id)
 
     if not media:
-        raise HTTPException(status_code=404, detail='Media not found')
+        raise HTTPException(
+            status_code=404,
+            detail='Media not found',
+        )
 
     file_path, content_type = build_get_media_response(media)
     response: FileResponse = FileResponse(file_path, media_type=content_type)
     return response
 
 
-@router.post('/tweets', response_model=TweetOut)
+@router.post('/tweets', response_model=TweetOut, status_code=201)
 async def create_tweet(
         request: Request,
         tweet: TweetIn,
@@ -103,13 +112,16 @@ async def create_tweet(
     new_tweet: Tweet | None = await create_tweet_by_schema(session, tweet, api_key)
 
     if not new_tweet:
-        raise HTTPException(status_code=400, detail='Tweet validation failed')
+        raise HTTPException(
+            status_code=400,
+            detail='Tweet validation failed',
+        )
 
     response: TweetOut = build_create_tweet_response(tweet=new_tweet)
     return response
 
 
-@router.get('/tweets', response_model=TweetsOut | ErrorBase)
+@router.get('/tweets', response_model=TweetsOut | ErrorBase, status_code=200)
 async def get_tweets(
         session: AsyncSession = Depends(get_async_session),
 ) -> TweetsOut | ErrorBase:
@@ -121,14 +133,17 @@ async def get_tweets(
     tweets: Sequence[Tweet] | None = await get_all_tweets(session)
 
     if not tweets:
-        error_response: ErrorBase = build_error_response('404', 'There are no tweets yet')
+        error_response: ErrorBase = build_error_response(
+            '404',
+            'There are no tweets yet',
+        )
         return error_response
 
     response: TweetsOut = build_get_tweets_response(tweets)
     return response
 
 
-@router.delete('/tweets/{id}', response_model=ResultBase)
+@router.delete('/tweets/{id}', response_model=ResultBase, status_code=200)
 async def delete_tweet(
         request: Request,
         tweet_id: Annotated[int, Path(alias='id')],
@@ -145,13 +160,16 @@ async def delete_tweet(
     check_tweet_deleted: bool = await delete_tweet_by_id(session, tweet_id, api_key)
 
     if not check_tweet_deleted:
-        raise HTTPException(status_code=404, detail='Tweet you can delete not found')
+        raise HTTPException(
+            status_code=404,
+            detail='Tweet you can delete not found',
+        )
 
     response: ResultBase = build_result_response(True)
     return response
 
 
-@router.post('/tweets/{id}/likes', response_model=ResultBase)
+@router.post('/tweets/{id}/likes', response_model=ResultBase, status_code=201)
 async def like_tweet(
         request: Request,
         tweet_id: Annotated[int, Path(alias='id')],
@@ -168,13 +186,16 @@ async def like_tweet(
     check_tweet_like: bool = await like_by_tweet_id(session, tweet_id, api_key)
 
     if not check_tweet_like:
-        raise HTTPException(status_code=404, detail='Tweet you can like not found')
+        raise HTTPException(
+            status_code=404,
+            detail='Tweet you can like not found',
+        )
 
     response: ResultBase = build_result_response(True)
     return response
 
 
-@router.delete('/tweets/{id}/likes', response_model=ResultBase)
+@router.delete('/tweets/{id}/likes', response_model=ResultBase, status_code=200)
 async def delete_like_tweet(
         request: Request,
         tweet_id: Annotated[int, Path(alias='id')],
@@ -191,13 +212,16 @@ async def delete_like_tweet(
     check_tweet_like: bool = await delete_like_by_tweet_id(session, tweet_id, api_key)
 
     if not check_tweet_like:
-        raise HTTPException(status_code=404, detail="Tweet's like not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Tweet's like not found",
+        )
 
     response: ResultBase = build_result_response(True)
     return response
 
 
-@router.get('/users/me', response_model=UserOut)
+@router.get('/users/me', response_model=UserOut, status_code=200)
 async def get_user_me(
         request: Request,
         session: AsyncSession = Depends(get_async_session),
@@ -209,16 +233,22 @@ async def get_user_me(
     :return: Схема UserOut
     """
     api_key: str = request.headers.get('api-key')
-    user: User | None = await get_user_with_followers_and_following_by_api_key(session, api_key)
+    user: User | None = await get_user_with_followers_and_following_by_api_key(
+        session,
+        api_key,
+    )
 
     if not user:
-        raise HTTPException(status_code=404, detail='User not found')
+        raise HTTPException(
+            status_code=404,
+            detail='User not found',
+        )
 
     response: UserOut = build_get_user_response(user)
     return response
 
 
-@router.get('/users/{id}', response_model=UserOut)
+@router.get('/users/{id}', response_model=UserOut, status_code=200)
 async def get_user_by_id(
         user_id: Annotated[int, Path(alias="id")],
         session: AsyncSession = Depends(get_async_session),
@@ -229,16 +259,22 @@ async def get_user_by_id(
     :param session: AsyncSession
     :return: Схема UserOut
     """
-    user: User | None = await get_user_with_followers_and_following_by_id(session, user_id)
+    user: User | None = await get_user_with_followers_and_following_by_id(
+        session,
+        user_id,
+    )
 
     if not user:
-        raise HTTPException(status_code=404, detail='User not found')
+        raise HTTPException(
+            status_code=404,
+            detail='User not found',
+        )
 
     response: UserOut = build_get_user_response(user)
     return response
 
 
-@router.post('/users/{id}/follow', response_model=ResultBase)
+@router.post('/users/{id}/follow', response_model=ResultBase, status_code=201)
 async def follow_user(
         request: Request,
         user_id: Annotated[int, Path(alias='id')],
@@ -255,13 +291,16 @@ async def follow_user(
     check_follow: bool = await follow_by_user_id(session, user_id, api_key)
 
     if not check_follow:
-        raise HTTPException(status_code=404, detail='User you can subscribe not found')
+        raise HTTPException(
+            status_code=404,
+            detail='User you can subscribe not found',
+        )
 
     response: ResultBase = build_result_response(True)
     return response
 
 
-@router.delete('/users/{id}/follow', response_model=ResultBase)
+@router.delete('/users/{id}/follow', response_model=ResultBase, status_code=200)
 async def unfollow_user(
         request: Request,
         user_id: Annotated[int, Path(alias='id')],
@@ -278,7 +317,10 @@ async def unfollow_user(
     check_follow: bool = await unfollow_by_user_id(session, user_id, api_key)
 
     if not check_follow:
-        raise HTTPException(status_code=404, detail='You were not subscribed to this user')
+        raise HTTPException(
+            status_code=404,
+            detail='You were not subscribed to this user',
+        )
 
     response: ResultBase = build_result_response(True)
     return response
