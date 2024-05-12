@@ -144,8 +144,8 @@ async def upload_media(file: UploadFile) -> str:
     """
     unique_filename: str = str(uuid.uuid4()) + "_" + file.filename
 
-    async with aiofiles.open(f'{FILE_DIR}/{unique_filename}', mode='wb') as out_file:
+    async with aiofiles.open(f'{FILE_DIR}/{unique_filename}', mode='wb') as f:
         content: bytes = await file.read()
-        await out_file.write(content)
+        await f.write(content)
 
     return unique_filename
