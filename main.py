@@ -1,3 +1,5 @@
+import os
+
 import uvicorn
 from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -12,7 +14,8 @@ from src.api.service import get_user_by_api_key
 app: FastAPI = FastAPI(title="Twitter API")
 app.include_router(router)
 
-app.mount("/static", StaticFiles(directory="static", html=True), name="static")
+static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 templates: Jinja2Templates = Jinja2Templates(directory="templates")
 
 
