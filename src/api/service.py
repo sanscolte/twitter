@@ -1,7 +1,16 @@
 from typing import Sequence, List
 
 from fastapi import UploadFile
-from sqlalchemy import select, delete, Select, Result, Delete, CursorResult
+from sqlalchemy import (
+    select,
+    delete,
+    Select,
+    Result,
+    Delete,
+    CursorResult,
+    desc,
+    func,
+)
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -12,8 +21,8 @@ from src.api.utils import upload_media
 
 
 async def create_media(
-        session: AsyncSession,
-        file: UploadFile,
+    session: AsyncSession,
+    file: UploadFile,
 ) -> Media | None:
     """
     Функция создания объекта Media
@@ -34,8 +43,8 @@ async def create_media(
 
 
 async def get_media(
-        session: AsyncSession,
-        media_id: int,
+    session: AsyncSession,
+    media_id: int,
 ) -> Media | None:
     """
     Функция для получения объекта Media по id
@@ -52,9 +61,9 @@ async def get_media(
 
 
 async def create_tweet_by_schema(
-        session: AsyncSession,
-        tweet: TweetIn,
-        api_key: str | None,
+    session: AsyncSession,
+    tweet: TweetIn,
+    api_key: str | None,
 ) -> Tweet | None:
     """
     Функция создания твита по схеме
@@ -82,30 +91,51 @@ async def create_tweet_by_schema(
 
 
 async def get_all_tweets(
-        session: AsyncSession,
+    session: AsyncSession,
+    api_key: str | None,
 ) -> Sequence[Tweet] | None:
     """
     Функция получения всех твитов со ссылками на файлы, автором и лайками
     :param session: AsyncSession
     :return: Последовательность твитов
     """
-    stmt: Select = (
-        select(Tweet)
-        .options(selectinload(Tweet.attachments))
-        .options(selectinload(Tweet.author))
-        .options(selectinload(Tweet.likes))
+    # Получение пользователей, на которых подписан текущий пользователь
+    following_stmt: Select = (
+        select(User)
+        .join(Follower, Follower.follower_api_key == api_key)
+        .filter(Follower.following_id == User.id)
+    )
+    following: Result = await session.execute(following_stmt)
+    following: Result = following.unique()
+    following_api_keys: List[str] = [user.api_key for user in following.scalars()]
+
+    following_api_keys.append(api_key)  # type: ignore
+
+    # Фильтрация твитов по пользователям
+    tweets_query: Select = select(Tweet).filter(
+        Tweet.author_api_key.in_(following_api_keys)
     )
 
-    result: Result = await session.execute(stmt)
-    tweets: Sequence[Tweet] | None = result.scalars().all()
+    # Сортировка твитов по популярности (количеству лайков)
+    sorted_tweets_query: Select = (
+        tweets_query.options(selectinload(Tweet.attachments))
+        .options(selectinload(Tweet.author))
+        .options(selectinload(Tweet.likes))
+        .join(TweetLike)
+        .group_by(Tweet.id)
+        .order_by(desc(func.count(TweetLike.tweet_id)))
+    )
+
+    tweet_result: Result = await session.execute(sorted_tweets_query)
+    tweets: Sequence[Tweet] | None = tweet_result.scalars().all()
 
     return tweets
 
 
 async def delete_tweet_by_id(
-        session: AsyncSession,
-        tweet_id: int,
-        api_key: str | None,
+    session: AsyncSession,
+    tweet_id: int,
+    api_key: str | None,
 ) -> bool:
     """
     Функция удаления твита по id
@@ -127,9 +157,9 @@ async def delete_tweet_by_id(
 
 
 async def like_by_tweet_id(
-        session: AsyncSession,
-        tweet_id: int,
-        api_key: str | None,
+    session: AsyncSession,
+    tweet_id: int,
+    api_key: str | None,
 ) -> bool:
     """
     Функция добавления твита в понравившиеся по id
@@ -152,9 +182,9 @@ async def like_by_tweet_id(
 
 
 async def delete_like_by_tweet_id(
-        session: AsyncSession,
-        tweet_id: int,
-        api_key: str | None,
+    session: AsyncSession,
+    tweet_id: int,
+    api_key: str | None,
 ) -> bool:
     """
     Функция удаления твита из понравившихся по id
@@ -176,8 +206,8 @@ async def delete_like_by_tweet_id(
 
 
 async def get_user_by_api_key(
-        session: AsyncSession,
-        api_key: str | None,
+    session: AsyncSession,
+    api_key: str | None,
 ) -> User | None:
     """
     Функция получения юзера по api-key
@@ -194,8 +224,8 @@ async def get_user_by_api_key(
 
 
 async def get_user_with_followers_and_following_by_api_key(
-        session: AsyncSession,
-        api_key: str | None,
+    session: AsyncSession,
+    api_key: str | None,
 ) -> User | None:
     """
     Функция получения юзера с подписчиками и подписками по api-key
@@ -217,8 +247,8 @@ async def get_user_with_followers_and_following_by_api_key(
 
 
 async def get_user_with_followers_and_following_by_id(
-        session: AsyncSession,
-        user_id: int | None,
+    session: AsyncSession,
+    user_id: int | None,
 ) -> User | None:
     """
      Функция получения юзера с подписчиками и подписками по id
@@ -240,8 +270,8 @@ async def get_user_with_followers_and_following_by_id(
 
 
 async def get_user_by_id(
-        session: AsyncSession,
-        user_id: int | None,
+    session: AsyncSession,
+    user_id: int | None,
 ) -> User | None:
     """
     Функция получения юзера по id
@@ -258,9 +288,9 @@ async def get_user_by_id(
 
 
 async def follow_by_user_id(
-        session: AsyncSession,
-        user_id: int,
-        follower_api_key: str | None,
+    session: AsyncSession,
+    user_id: int,
+    follower_api_key: str | None,
 ) -> bool:
     """
     Функция подписки на юзера по id
@@ -283,9 +313,9 @@ async def follow_by_user_id(
 
 
 async def unfollow_by_user_id(
-        session: AsyncSession,
-        user_id: int,
-        follower_api_key: str | None,
+    session: AsyncSession,
+    user_id: int,
+    follower_api_key: str | None,
 ) -> bool:
     """
     Функция отписки от юзера по id

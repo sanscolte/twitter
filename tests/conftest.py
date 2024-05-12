@@ -55,9 +55,9 @@ async def prepare_database() -> None:  # type: ignore
 @pytest.fixture(scope="session")
 async def ac() -> AsyncGenerator[AsyncClient, None]:
     async with AsyncClient(
-            transport=ASGITransport(app=app),  # type: ignore
-            base_url="http://test/api",
-            headers={"api-key": "test"},
+        transport=ASGITransport(app=app),  # type: ignore
+        base_url="http://test/api",
+        headers={"api-key": "test"},
     ) as ac:
         yield ac
 

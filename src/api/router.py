@@ -129,6 +129,7 @@ async def create_tweet(
 
 @router.get("/tweets", response_model=TweetsOut | ErrorBase, status_code=200)
 async def get_tweets(
+    request: Request,
     session: AsyncSession = Depends(get_async_session),
 ) -> TweetsOut | ErrorBase:
     """
@@ -136,7 +137,8 @@ async def get_tweets(
     :param session: AsyncSession
     :return: Схема TweetsOut или ErrorBase
     """
-    tweets: Sequence[Tweet] | None = await get_all_tweets(session)
+    api_key: str | None = request.headers.get("api-key")
+    tweets: Sequence[Tweet] | None = await get_all_tweets(session, api_key)
 
     if not tweets:
         error_response: ErrorBase = build_error_response(
