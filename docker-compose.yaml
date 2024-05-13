@@ -1,0 +1,50 @@
+services:
+  db:
+    container_name: "db"
+    image: postgres:latest
+    restart: always
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d twitter -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    networks:
+      - my_network
+
+  server:
+    container_name: "api"
+    image: api
+    restart: always
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: Dockerfile_server
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    networks:
+      - my_network
+    command:
+      - sh
+      - -c
+      - |
+        alembic upgrade head &&
+        uvicorn src.main:app --host 0.0.0.0 --port 5000
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  my_network:
+    driver: bridge
