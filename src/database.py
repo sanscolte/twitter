@@ -60,15 +60,6 @@ async def create_db_data() -> None:
         await session.refresh(user2)
         await session.refresh(user3)
 
-        user_follow1: Follower = Follower(follower_api_key='test', following_id=2)
-        user_follow2: Follower = Follower(follower_api_key='test', following_id=3)
-        user_follow3: Follower = Follower(follower_api_key='test2', following_id=1)
-        session.add_all([user_follow1, user_follow2, user_follow3])
-
-        await session.commit()
-        await session.refresh(user_follow1)
-        await session.refresh(user_follow2)
-
         tweet1: Tweet = Tweet(content="First tweet", author_api_key="test")
         tweet2: Tweet = Tweet(content="Second tweet", author_api_key="test2")
         tweet3: Tweet = Tweet(content="Third tweet", author_api_key="test3")
