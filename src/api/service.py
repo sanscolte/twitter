@@ -15,9 +15,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.api.models import User, Tweet, TweetLike, Follower, Media
-from src.api.schemas import TweetIn
-from src.api.utils import upload_media
+from .models import User, Tweet, TweetLike, Follower, Media
+from .schemas import TweetIn, UserIn
+from .utils import upload_media
 
 
 async def create_media(
@@ -92,42 +92,25 @@ async def create_tweet_by_schema(
 
 async def get_all_tweets(
     session: AsyncSession,
-    api_key: str | None,
 ) -> Sequence[Tweet] | None:
     """
     Функция получения всех твитов со ссылками на файлы, автором и лайками
+    отсортированных в порядке убывания по популярности
     :param session: AsyncSession
     :return: Последовательность твитов
     """
-    # Получение пользователей, на которых подписан текущий пользователь
-    following_stmt: Select = (
-        select(User)
-        .join(Follower, Follower.follower_api_key == api_key)
-        .filter(Follower.following_id == User.id)
-    )
-    following: Result = await session.execute(following_stmt)
-    following: Result = following.unique()
-    following_api_keys: List[str] = [user.api_key for user in following.scalars()]
-
-    following_api_keys.append(api_key)  # type: ignore
-
-    # Фильтрация твитов по пользователям
-    tweets_query: Select = select(Tweet).filter(
-        Tweet.author_api_key.in_(following_api_keys)
-    )
-
-    # Сортировка твитов по популярности (количеству лайков)
-    sorted_tweets_query: Select = (
-        tweets_query.options(selectinload(Tweet.attachments))
+    stmt: Select = (
+        select(Tweet)
+        .options(selectinload(Tweet.attachments))
         .options(selectinload(Tweet.author))
         .options(selectinload(Tweet.likes))
-        .join(TweetLike)
+        .outerjoin(Tweet.likes)
+        .order_by(desc(func.count(Tweet.likes)))
         .group_by(Tweet.id)
-        .order_by(desc(func.count(TweetLike.tweet_id)))
     )
 
-    tweet_result: Result = await session.execute(sorted_tweets_query)
-    tweets: Sequence[Tweet] | None = tweet_result.scalars().all()
+    result: Result = await session.execute(stmt)
+    tweets: Sequence[Tweet] | None = result.scalars().all()
 
     return tweets
 
@@ -335,3 +318,22 @@ async def unfollow_by_user_id(
         return True
 
     return False
+
+
+async def create_user_by_schema(
+        session: AsyncSession,
+        user: UserIn,
+) -> User | None:
+    """
+    Функция создания юзера по схеме
+    :param session: AsyncSession
+    :param user: Схема UserIn
+    :return: User или None
+    """
+
+    new_user: User = User(api_key=user.api_key, name=user.name)
+
+    session.add(new_user)
+    await session.commit()
+
+    return new_user

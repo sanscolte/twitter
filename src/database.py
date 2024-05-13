@@ -1,3 +1,4 @@
+import asyncio
 from typing import AsyncGenerator
 
 from sqlalchemy.pool import NullPool
@@ -8,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
     AsyncEngine,
 )
 
-from config import (
+from .config import (
     DB_USER,
     DB_PASS,
     DB_HOST,
@@ -18,7 +19,7 @@ from config import (
 from src.api.models import (
     Base,
     User,
-    Tweet,
+    Tweet, Follower, TweetLike,
 )
 
 DATABASE_URL: str = (
@@ -59,9 +60,24 @@ async def create_db_data() -> None:
         await session.refresh(user2)
         await session.refresh(user3)
 
+        user_follow1: Follower = Follower(follower_api_key='test', following_id=2)
+        user_follow2: Follower = Follower(follower_api_key='test', following_id=3)
+        user_follow3: Follower = Follower(follower_api_key='test2', following_id=1)
+        session.add_all([user_follow1, user_follow2, user_follow3])
+
+        await session.commit()
+        await session.refresh(user_follow1)
+        await session.refresh(user_follow2)
+
         tweet1: Tweet = Tweet(content="First tweet", author_api_key="test")
         tweet2: Tweet = Tweet(content="Second tweet", author_api_key="test2")
         tweet3: Tweet = Tweet(content="Third tweet", author_api_key="test3")
         session.add_all([tweet1, tweet2, tweet3])
 
         await session.commit()
+
+
+if __name__ == '__main__':
+    asyncio.run(drop_db_and_tables())
+    asyncio.run(create_db_and_tables())
+    asyncio.run(create_db_data())

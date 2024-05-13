@@ -5,9 +5,9 @@ from typing import Sequence, Tuple
 import aiofiles
 from fastapi import UploadFile
 
-from config import FILE_DIR
-from src.api.models import User, Tweet, Media
-from src.api.schemas import (
+from src.config import FILE_DIR
+from .models import User, Tweet, Media
+from .schemas import (
     ResultBase,
     UserOut,
     ErrorBase,

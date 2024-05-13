@@ -71,6 +71,11 @@ class FollowBase(AuthorBase):
     pass
 
 
+class UserIn(BaseModel):
+    name: str
+    api_key: str
+
+
 class UserBase(AuthorBase):
     """Схема юзера с подписчиками и подписками. Родитель - AuthorBase"""
 

@@ -11,15 +11,15 @@ from sqlalchemy.ext.asyncio import (
 )
 from fastapi.testclient import TestClient
 
-from config import (
+from src.config import (
     TEST_DB_USER,
     TEST_DB_PASS,
     TEST_DB_HOST,
     TEST_DB_PORT,
     TEST_DB_NAME,
 )
-from database import get_async_session
-from main import app
+from src.database import get_async_session
+from src.main import app
 from src.api.models import Base, User
 
 TEST_DATABASE_URL: str = (

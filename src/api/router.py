@@ -4,18 +4,18 @@ from fastapi import APIRouter, Depends, Request, HTTPException, Path, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import get_async_session
-from src.api.models import User, Tweet, Media
-from src.api.schemas import (
+from src.database import get_async_session
+from .models import User, Tweet, Media
+from .schemas import (
     UserOut,
     ResultBase,
     TweetsOut,
     TweetOut,
     TweetIn,
     MediaOut,
-    ErrorBase,
+    ErrorBase, UserIn,
 )
-from src.api.service import (
+from .service import (
     get_user_with_followers_and_following_by_api_key,
     delete_tweet_by_id,
     get_all_tweets,
@@ -26,9 +26,9 @@ from src.api.service import (
     get_user_with_followers_and_following_by_id,
     create_tweet_by_schema,
     create_media,
-    get_media,
+    get_media, create_user_by_schema,
 )
-from src.api.utils import (
+from .utils import (
     build_get_user_response,
     build_result_response,
     build_get_tweets_response,
@@ -46,8 +46,8 @@ router: APIRouter = APIRouter(
 
 @router.post("/medias", response_model=MediaOut, status_code=201)
 async def create_medias(
-    file: UploadFile,
-    session: AsyncSession = Depends(get_async_session),
+        file: UploadFile,
+        session: AsyncSession = Depends(get_async_session),
 ) -> MediaOut:
     """
     Эндпоинт для загрузки файла
@@ -75,8 +75,8 @@ async def create_medias(
 
 @router.get("/medias/{media_id}", response_model=None, status_code=200)
 async def get_medias(
-    media_id: int,
-    session: AsyncSession = Depends(get_async_session),
+        media_id: int,
+        session: AsyncSession = Depends(get_async_session),
 ) -> FileResponse:
     """
     Эндпоинт для получения файла по id
@@ -99,9 +99,9 @@ async def get_medias(
 
 @router.post("/tweets", response_model=TweetOut, status_code=201)
 async def create_tweet(
-    request: Request,
-    tweet: TweetIn,
-    session: AsyncSession = Depends(get_async_session),
+        request: Request,
+        tweet: TweetIn,
+        session: AsyncSession = Depends(get_async_session),
 ) -> TweetOut:
     """
     Эндпоинт
@@ -129,16 +129,14 @@ async def create_tweet(
 
 @router.get("/tweets", response_model=TweetsOut | ErrorBase, status_code=200)
 async def get_tweets(
-    request: Request,
-    session: AsyncSession = Depends(get_async_session),
+        session: AsyncSession = Depends(get_async_session),
 ) -> TweetsOut | ErrorBase:
     """
     Эндпоинт для получения всех твитов
     :param session: AsyncSession
     :return: Схема TweetsOut или ErrorBase
     """
-    api_key: str | None = request.headers.get("api-key")
-    tweets: Sequence[Tweet] | None = await get_all_tweets(session, api_key)
+    tweets: Sequence[Tweet] | None = await get_all_tweets(session)
 
     if not tweets:
         error_response: ErrorBase = build_error_response(
@@ -153,9 +151,9 @@ async def get_tweets(
 
 @router.delete("/tweets/{id}", response_model=ResultBase, status_code=200)
 async def delete_tweet(
-    request: Request,
-    tweet_id: Annotated[int, Path(alias="id")],
-    session: AsyncSession = Depends(get_async_session),
+        request: Request,
+        tweet_id: Annotated[int, Path(alias="id")],
+        session: AsyncSession = Depends(get_async_session),
 ) -> ResultBase:
     """
     Эндпоинт для удаления твита по id
@@ -183,9 +181,9 @@ async def delete_tweet(
 
 @router.post("/tweets/{id}/likes", response_model=ResultBase, status_code=201)
 async def like_tweet(
-    request: Request,
-    tweet_id: Annotated[int, Path(alias="id")],
-    session: AsyncSession = Depends(get_async_session),
+        request: Request,
+        tweet_id: Annotated[int, Path(alias="id")],
+        session: AsyncSession = Depends(get_async_session),
 ) -> ResultBase:
     """
     Эндпоинт для добавления твита в понравившиеся
@@ -209,9 +207,9 @@ async def like_tweet(
 
 @router.delete("/tweets/{id}/likes", response_model=ResultBase, status_code=200)
 async def delete_like_tweet(
-    request: Request,
-    tweet_id: Annotated[int, Path(alias="id")],
-    session: AsyncSession = Depends(get_async_session),
+        request: Request,
+        tweet_id: Annotated[int, Path(alias="id")],
+        session: AsyncSession = Depends(get_async_session),
 ) -> ResultBase:
     """
     Эндпоинт для удаления твита из понравившихся
@@ -239,8 +237,8 @@ async def delete_like_tweet(
 
 @router.get("/users/me", response_model=UserOut, status_code=200)
 async def get_user_me(
-    request: Request,
-    session: AsyncSession = Depends(get_async_session),
+        request: Request,
+        session: AsyncSession = Depends(get_async_session),
 ) -> UserOut:
     """
     Эндпоинт для получения своего профиля
@@ -266,8 +264,8 @@ async def get_user_me(
 
 @router.get("/users/{id}", response_model=UserOut, status_code=200)
 async def get_user_by_id(
-    user_id: Annotated[int, Path(alias="id")],
-    session: AsyncSession = Depends(get_async_session),
+        user_id: Annotated[int, Path(alias="id")],
+        session: AsyncSession = Depends(get_async_session),
 ) -> UserOut:
     """
     Эндпоинт для получения юзера по id
@@ -292,9 +290,9 @@ async def get_user_by_id(
 
 @router.post("/users/{id}/follow", response_model=ResultBase, status_code=201)
 async def follow_user(
-    request: Request,
-    user_id: Annotated[int, Path(alias="id")],
-    session: AsyncSession = Depends(get_async_session),
+        request: Request,
+        user_id: Annotated[int, Path(alias="id")],
+        session: AsyncSession = Depends(get_async_session),
 ) -> ResultBase:
     """
     Эндпоинт для подписки на юзера по id
@@ -318,9 +316,9 @@ async def follow_user(
 
 @router.delete("/users/{id}/follow", response_model=ResultBase, status_code=200)
 async def unfollow_user(
-    request: Request,
-    user_id: Annotated[int, Path(alias="id")],
-    session: AsyncSession = Depends(get_async_session),
+        request: Request,
+        user_id: Annotated[int, Path(alias="id")],
+        session: AsyncSession = Depends(get_async_session),
 ) -> ResultBase:
     """
     Эндпоинт для отписки от юзера по id
@@ -336,6 +334,29 @@ async def unfollow_user(
         raise HTTPException(
             status_code=404,
             detail="You were not subscribed to this user",
+        )
+
+    response: ResultBase = build_result_response(True)
+    return response
+
+
+@router.post('register', response_model=ResultBase, status_code=201)
+async def register_user(
+        user: UserIn,
+        session: AsyncSession = Depends(get_async_session),
+) -> ResultBase:
+    """
+    Эндпоинт для регистрации пользователя
+    :param user: Схема UserIn
+    :param session: AsyncSession
+    :return: Схема ResultBase
+    """
+    new_user: User | None = await create_user_by_schema(session, user)
+
+    if not new_user:
+        raise HTTPException(
+            status_code=400,
+            detail="User validation error",
         )
 
     response: ResultBase = build_result_response(True)
