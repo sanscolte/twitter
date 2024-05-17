@@ -321,8 +321,8 @@ async def unfollow_by_user_id(
 
 
 async def create_user_by_schema(
-        session: AsyncSession,
-        user: UserIn,
+    session: AsyncSession,
+    user: UserIn,
 ) -> User | None:
     """
     Функция создания юзера по схеме

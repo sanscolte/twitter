@@ -15,25 +15,27 @@ services:
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     networks:
-      - my_network
+      - custom
 
   server:
-    container_name: "api"
+    container_name: "server"
     image: api
     restart: always
     env_file:
-      - .env
+      - .env.prod
     build:
       context: .
-      dockerfile: Dockerfile_server
+      dockerfile: server/Dockerfile_server
     ports:
       - "5000:5000"
+    volumes:
+      - ./client/static:/static
     depends_on:
       db:
         condition: service_healthy
         restart: true
     networks:
-      - my_network
+      - custom
     command:
       - sh
       - -c
@@ -41,12 +43,12 @@ services:
         alembic upgrade head &&
         uvicorn src.main:app --host 0.0.0.0 --port 5000
 
-  client:
+  static:
     container_name: "nginx"
-    image: client
+    image: static
     build:
       context: .
-      dockerfile: Dockerfile_static
+      dockerfile: client/Dockerfile_static
     ports:
       - "8080:80"
     depends_on:
@@ -54,12 +56,12 @@ services:
         condition: service_started
         restart: true
     networks:
-      - my_network
+      - custom
 
 volumes:
   pgdata:
     driver: local
 
 networks:
-  my_network:
+  custom:
     driver: bridge

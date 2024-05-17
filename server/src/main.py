@@ -1,37 +1,29 @@
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, Request, Response, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
 
-from src.config import static_dir
-from .database import (
-    async_session,
-    drop_db_and_tables,
-    create_db_and_tables,
-    create_db_data,
-)
 from src.api.models import User
 from src.api.router import router
 from src.api.service import get_user_by_api_key
 
+from .database import async_session, create_db_and_tables
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await drop_db_and_tables()
     await create_db_and_tables()
-    await create_db_data()
     yield
-    await drop_db_and_tables()
 
 
 app: FastAPI = FastAPI(title="Twitter API", lifespan=lifespan)
 app.include_router(router)
 
-app.mount("/static", "static", name="static")
-templates: Jinja2Templates = Jinja2Templates(directory=f"static/templates")
+app.mount("/static", StaticFiles(directory="/static"), name="static")
+app.mount("/js", StaticFiles(directory="/static/js"), name="js")
+app.mount("/css", StaticFiles(directory="/static/css"), name="css")
 
 
 @app.middleware("http")
@@ -55,13 +47,12 @@ async def check_user_api_key_middleware(request: Request, call_next):
 
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
+async def index():
     """
     Эндпоинт для отдачи статики
-    :param request: Запрос
     :return: Шаблон
     """
-    return templates.TemplateResponse("index.html", {"request": request})
+    return FileResponse("/static/templates/index.html")
 
 
 if __name__ == "__main__":

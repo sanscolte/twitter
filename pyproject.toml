@@ -1,5 +1,11 @@
 [tool.pytest.ini_options]
-pythonpath = [
-    ".", "src",
-]
+pythonpath = [".", "src"]
 asyncio_mode="auto"
+
+[tool.mypy]
+exclude = ['venv', 'server/alembic']
+disable_error_code = ['import-not-found', 'no-redef']
+
+[tool.flake8]
+max-line-length = 88
+exclude = ['venv', 'server/alembic']
