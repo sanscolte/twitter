@@ -9,3 +9,6 @@ disable_error_code = ['import-not-found', 'no-redef']
 [tool.flake8]
 max-line-length = 88
 exclude = ['venv', 'server/alembic']
+
+[tool.ruff]
+exclude = ['server/alembic']
