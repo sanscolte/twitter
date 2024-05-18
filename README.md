@@ -8,19 +8,18 @@
 
 1. Клонируйте репозиторий командой
 
-```shell
-git clone https://github.com/sanscolte/twitter.git
-```
+   ```shell
+   git clone https://github.com/sanscolte/twitter.git
+   ```
 
 2. Установите Docker и Docker Compose
-   https://docs.docker.com/engine/install/
+- https://docs.docker.com/engine/install/
+- https://docs.docker.com/compose/install/
 
 ## Как запустить
 
-Для запуска проекта перейдите в корень проекта, запустите
+Для запуска перейдите в корень проекта и запустите
 
 ```shell
-docker-compose up -d
+make
 ```
-
-И перейдите по http://localhost:5000/
